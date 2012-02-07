@@ -99,6 +99,7 @@ class TaskItem(object):
 
     def add_item(self, item):
         self.items.append(item)
+        item.parent = self
 
     def is_task(self):
         return self.txt.startswith('- ')
@@ -173,6 +174,7 @@ class TaskPaper(object):
 
     def add_item(self, item):
         self.items.append(item)
+        item.parent = self
 
     def level(self):
         return 0
