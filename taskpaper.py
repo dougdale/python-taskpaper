@@ -97,6 +97,10 @@ class TaskItem(object):
         else:
             return TaskItem(line, parent=parent)
 
+    def copy(self):
+        c = TaskItem(txt=self.txt, tags=dict(self.tags))
+        return c
+
     def add_item(self, item):
         self.items.append(item)
         item.parent = self
@@ -115,6 +119,17 @@ class TaskItem(object):
         if self.parent:
             self.parent.items.remove(self)
 
+    def path_to_root(self):
+        path = [self]
+        while path[-1].parent and path[-1].parent.parent:
+            path.append(path[-1].parent)
+        return path
+
+    def path_from_root(self):
+        path = self.path_to_root()
+        path.reverse()
+        return path
+        
     def level(self):
         "Count how far this node is removed from the top level"
         count = -1
@@ -175,6 +190,17 @@ class TaskPaper(object):
     def add_item(self, item):
         self.items.append(item)
         item.parent = self
+
+    def add_path(self, path):
+        parent = self
+        for nd in path:
+            matches = [child for child in parent.items if child.txt == nd.txt]
+            if matches:
+                parent = matches[0]
+            else:
+                new = nd.copy()
+                parent.add_item(new)
+                parent = new
 
     def level(self):
         return 0
