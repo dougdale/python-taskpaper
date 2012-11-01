@@ -22,45 +22,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
 import types
+import re
 
+TAGS_PATTERN = re.compile('@((?:\w|-)+)(?:\(([^)]*)\))?')
 
 def extract_tags(line):
     tags = {}
 
-    at  = None
-    arg = None
+    for match in TAGS_PATTERN.finditer(line):
+        tags[match.group(1)] = match.group(2)
 
-    def add_tag(at, arg, last):
-        if arg:
-            tags[line[at+1:arg]]  = line[arg+1:last]
-        else:
-            tags[line[at+1:last]] = None
-
-    for i in xrange(len(line)):
-        if line[i] == '@':
-            if at is None:
-                # start of a new tag
-                at = i
-            elif i > 0 and line[i - 1] == ' ':
-                # missing closing ')' of previous argument
-                add_tag(at, arg, i)
-                arg = None
-                at = i
-        elif line[i] == ' ' and arg is None and not at is None:
-            # end of a tag without an argument
-            add_tag(at, arg, i)
-            at = None
-        elif line[i] == '(' and arg is None and not at is None:
-            # start of a tag argument
-            arg = i
-        elif line[i] == ')' and not arg is None:
-            # end of a tag with argument
-            add_tag(at, arg, i)
-            at  = None
-            arg = None
-    if not at is None:
-        # last tag ends at end-of-line
-        add_tag(at, arg, i)
     return tags
 
 def indent_level(line):
@@ -129,7 +100,7 @@ class TaskItem(object):
         path = self.path_to_root()
         path.reverse()
         return path
-        
+
     def level(self):
         "Count how far this node is removed from the top level"
         count = -1
