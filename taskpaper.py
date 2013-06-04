@@ -172,6 +172,7 @@ class TaskPaper(object):
                 new = nd.copy()
                 parent.add_item(new)
                 parent = new
+        return parent
 
     def level(self):
         return 0
