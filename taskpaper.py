@@ -24,7 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import types
 import re
 
-TAGS_PATTERN = re.compile('@((?:\w|-)+)(?:\(([^)]*)\))?')
+TAGS_PATTERN = re.compile(r'\s+@((?:\w|-)+)(?:\(([^)]*)\))?')
 
 
 def extract_tags(line):
@@ -33,7 +33,9 @@ def extract_tags(line):
     for match in TAGS_PATTERN.finditer(line):
         tags[match.group(1)] = match.group(2)
 
-    return tags
+    # remove tags, preserving ':' at end of text
+    text = TAGS_PATTERN.sub('', line)
+    return text, tags
 
 
 def indent_level(line):
@@ -65,12 +67,8 @@ class TaskItem(object):
 
     @staticmethod
     def parse(line, parent=None):
-        tag_start = line.find('@')
-        if tag_start != -1:
-            tags = extract_tags(line[tag_start:])
-            return TaskItem(line[:tag_start], tags=tags, parent=parent)
-        else:
-            return TaskItem(line, parent=parent)
+        text, tags = extract_tags(line)
+        return TaskItem(text, tags=tags, parent=parent)
 
     def copy(self):
         c = TaskItem(txt=self.txt, tags=dict(self.tags))
