@@ -1,5 +1,5 @@
 import unittest
-from taskpaper import TaskPaper
+from taskpaper import TaskPaper, TaskItem
 
 
 class EmptyObject(unittest.TestCase):
@@ -19,6 +19,42 @@ class EmptyFile(unittest.TestCase):
         "should handle empty file okay"
         til = TaskPaper.parse('')
         self.assertEqual(0, len(til.items))
+
+
+class ParseItems(unittest.TestCase):
+    def test_parse_project_no_tags(self):
+        ti = TaskItem.parse('project:')
+        self.assertTrue(ti.is_project())
+
+    def test_parse_project_with_tags(self):
+        # there are three formats for projects with tags, per TaskPaper v2.3.2
+        # 1. colon at end
+        # 2. colon before tags
+        # 3. colon between tags
+        valid_project_formats = [
+            'project @tag:',
+            'project: @tag',
+            'project @tag: @tag2',
+        ]
+        for fmt in valid_project_formats:
+            ti = TaskItem.parse(fmt)
+            self.assertTrue(ti.is_project(), "did not accept '%s'" % (fmt,))
+
+    def test_parse_task_no_tags(self):
+        ti = TaskItem.parse('- task')
+        self.assertTrue(ti.is_task())
+
+    def test_parse_task_with_tags(self):
+        ti = TaskItem.parse('- task @tag')
+        self.assertTrue(ti.is_task())
+
+    def test_parse_note_no_tags(self):
+        ti = TaskItem.parse('note')
+        self.assertTrue(ti.is_note())
+
+    def test_parse_note_with_tags(self):
+        ti = TaskItem.parse('note @tag')
+        self.assertTrue(ti.is_note())
 
 
 class ParseString(unittest.TestCase):
@@ -62,6 +98,16 @@ class FormatCorrectness(unittest.TestCase):
         til = TaskPaper.parse(line.splitlines())
         output = til.format()
         self.assertEqual(line, output)
+
+    def test_format_with_tags(self):
+        # for projects, ending colon can be either before or after tags
+        # so allow for either by reconverting
+        line = 'project 1 @tag1:\n\t- task 1 @tag2\n\tcomment 1 @tag3'
+        til_1 = TaskPaper.parse(line.splitlines())
+        output_1 = til_1.format()
+        til_2 = TaskPaper.parse(output_1.splitlines())
+        output_2 = til_2.format()
+        self.assertEqual(output_1, output_2)
 
 
 if __name__ == '__main__':
