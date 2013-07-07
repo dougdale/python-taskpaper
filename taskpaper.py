@@ -26,6 +26,7 @@ import re
 
 TAGS_PATTERN = re.compile('@((?:\w|-)+)(?:\(([^)]*)\))?')
 
+
 def extract_tags(line):
     tags = {}
 
@@ -33,6 +34,7 @@ def extract_tags(line):
         tags[match.group(1)] = match.group(2)
 
     return tags
+
 
 def indent_level(line):
     level = 0
@@ -48,12 +50,14 @@ class TaskItem(object):
     An entry in a TaskPaper file. Corresponds to one line.
     """
 
-    def __init__(self, txt="", tags={}, items=None, parent=None):
+    def __init__(self, txt="", tags=None, items=None, parent=None):
         self.txt = txt.strip()
         self.parent = parent
         if not items:
             items = []
         self.items = items
+        if not tags:
+            tags = {}
         self.tags = tags
         assert parent != self
         if parent:
@@ -121,10 +125,11 @@ class TaskItem(object):
             return False
 
     def format(self, with_tabs=True):
-        tag_txt  = " ".join(['@%s' % x if self.tags[x] is None else "@%s(%s)" % (x, self.tags[x])
-                             for x in self.tags])
+        tag_txt  = " ".join(['@%s' % x if self.tags[x] is None else "@%s(%s)" %
+                             (x, self.tags[x]) for x in self.tags])
         tabs_txt = '\t' * self.level() if with_tabs else ''
-        return "%s%s%s%s" % (tabs_txt, self.txt, ' ' if tag_txt else '', tag_txt)
+        return "%s%s%s%s" % (tabs_txt, self.txt, ' ' if tag_txt else '',
+                             tag_txt)
 
     def __str__(self):
         return self.format(False)
