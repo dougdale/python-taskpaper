@@ -24,7 +24,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import types
 import re
 
-TAGS_PATTERN = re.compile('@((?:\w|-)+)(?:\(([^)]*)\))?')
+TAGS_PATTERN = re.compile(r'\s+@((?:\w|-)+)(?:\(([^)]*)\))?')
+
 
 def extract_tags(line):
     tags = {}
@@ -32,7 +33,10 @@ def extract_tags(line):
     for match in TAGS_PATTERN.finditer(line):
         tags[match.group(1)] = match.group(2)
 
-    return tags
+    # remove tags, preserving ':' at end of text
+    text = TAGS_PATTERN.sub('', line)
+    return text, tags
+
 
 def indent_level(line):
     level = 0
@@ -48,12 +52,14 @@ class TaskItem(object):
     An entry in a TaskPaper file. Corresponds to one line.
     """
 
-    def __init__(self, txt="", tags={}, items=None, parent=None):
+    def __init__(self, txt="", tags=None, items=None, parent=None):
         self.txt = txt.strip()
         self.parent = parent
         if not items:
             items = []
         self.items = items
+        if not tags:
+            tags = {}
         self.tags = tags
         assert parent != self
         if parent:
@@ -61,12 +67,8 @@ class TaskItem(object):
 
     @staticmethod
     def parse(line, parent=None):
-        tag_start = line.find('@')
-        if tag_start != -1:
-            tags = extract_tags(line[tag_start:])
-            return TaskItem(line[:tag_start], tags=tags, parent=parent)
-        else:
-            return TaskItem(line, parent=parent)
+        text, tags = extract_tags(line)
+        return TaskItem(text, tags=tags, parent=parent)
 
     def copy(self):
         c = TaskItem(txt=self.txt, tags=dict(self.tags))
@@ -121,10 +123,11 @@ class TaskItem(object):
             return False
 
     def format(self, with_tabs=True):
-        tag_txt  = " ".join(['@%s' % x if self.tags[x] is None else "@%s(%s)" % (x, self.tags[x])
-                             for x in self.tags])
+        tag_txt  = " ".join(['@%s' % x if self.tags[x] is None else "@%s(%s)" %
+                             (x, self.tags[x]) for x in self.tags])
         tabs_txt = '\t' * self.level() if with_tabs else ''
-        return "%s%s%s%s" % (tabs_txt, self.txt, ' ' if tag_txt else '', tag_txt)
+        return "%s%s%s%s" % (tabs_txt, self.txt, ' ' if tag_txt else '',
+                             tag_txt)
 
     def __str__(self):
         return self.format(False)
