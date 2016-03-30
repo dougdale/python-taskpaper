@@ -24,7 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import types
 import re
 
-TAGS_PATTERN = re.compile(r'\s+@((?:\w|-)+)(?:\(([^)]*)\))?')
+TAGS_PATTERN = re.compile(r'\s+@((?:\w|-)+)(?:\((.*?[^\\])\)|\(\))?')
 
 
 def extract_tags(line):

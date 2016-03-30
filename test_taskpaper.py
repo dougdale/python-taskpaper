@@ -76,13 +76,15 @@ class ParseString(unittest.TestCase):
 
 class TagHandling(unittest.TestCase):
     lines = 'project 1 @tag1:\n\t- task 1 @tag1(content) @tag2(content)\n' \
-            '\t- task 2 @tag2(multi word)\n'.splitlines()
+            '\t- task 2 @tag2(multi word)\n' \
+            '\t- task 3 @tag3(with \\) escaped @nested(tag\\))\n' \
+            '\t- task 4 @tag4() empty args'.splitlines()
 
     def test_find_all_tags(self):
         "Find all tags"
         til = TaskPaper.parse(self.lines)
         tag_count = sum(len(i.tags.keys()) for i in til)
-        self.assertEqual(4, tag_count)
+        self.assertEqual(6, tag_count)
 
     def test_find_desired_tags(self):
         "find just specified tags"
@@ -90,6 +92,21 @@ class TagHandling(unittest.TestCase):
         for tag in ('tag1', 'tag2'):
             tag_count = sum(1 for _ in til.select(lambda _: tag in _.tags))
             self.assertEqual(2, tag_count)
+
+    def test_nested_escaped_tags(self):
+        "proper parsing of escaped closing parens"
+        til = TaskPaper.parse(self.lines)
+        matches = list(til['tag3'])
+        self.assertEqual(1, len(matches))
+        self.assertEqual(matches[0].tags['tag3'], 'with \\) escaped @nested(tag\\)')
+
+    def test_empty_args(self):
+        "proper parsing of empty tag arguments"
+        til = TaskPaper.parse(self.lines)
+        matches = list(til['tag4'])
+        self.assertEqual(1, len(matches))
+        self.assertEqual(matches[0].txt, '- task 4 empty args')
+        self.assertIs(matches[0].tags['tag4'], None)
 
 
 class FormatCorrectness(unittest.TestCase):
