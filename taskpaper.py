@@ -6,6 +6,9 @@ Copyright (c) 2009 Matt Dawson
 Rewritten by Bjoern Brandenburg
 Copyright (c) 2010 Bjoern Brandenburg
 
+Modified by Doug Dale
+Copyright (c) 2016 Doug Dale
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +24,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-import types
 import re
 
 TAGS_PATTERN = re.compile(r'\s+@((?:\w|-)+)(?:\((.*?[^\\])\)|\(\))?')
@@ -40,7 +42,7 @@ def extract_tags(line):
 
 def indent_level(line):
     level = 0
-    for i in xrange(len(line)):
+    for i in range(len(line)):
         if line[i] != '\t':
             break
         level += 1
@@ -132,7 +134,6 @@ class TaskItem(object):
     def __str__(self):
         return self.format(False)
 
-
 class TaskPaper(object):
     """
     A wrapper class for TaskPaper files.
@@ -152,7 +153,7 @@ class TaskPaper(object):
             if level == last_level:
                 # sibling
                 last_item = TaskItem.parse(line, last_item.parent)
-            elif level > last_item:
+            elif level > last_item.level():
                 # sub-item
                 last_item = TaskItem.parse(line, last_item)
             else:
